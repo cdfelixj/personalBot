@@ -1,0 +1,53 @@
+from flask import Flask, request,make_response,render_template, jsonify
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.vectorstores import Chroma
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.llms import OpenAI
+from langchain.chains import RetrievalQA
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import PromptTemplate
+import os 
+from langchain.prompts import MessagesPlaceholder
+from langchain.prompts.few_shot import FewShotPromptTemplate
+from langchain.prompts.example_selector import SemanticSimilarityExampleSelector
+import time
+import threading
+import requests
+import json
+import time
+os.environ['OPENAI_API_KEY']="sk-111111111111111111111111111111111111111111111111"
+os.environ['OPENAI_API_BASE']="http://127.0.0.1:5000/v1"
+import openai
+
+embeddings = OpenAIEmbeddings()
+instance = Chroma(persist_directory="/Users/j_fel/Desktop/ProfileLLM/db", embedding_function=embeddings)
+
+tech_template = """You are a Chatbot
+{context} 
+
+Q: {question}
+A: """
+PROMPT = PromptTemplate(
+    template=tech_template, input_variables=["context", "question"]
+)
+
+
+qa = RetrievalQA.from_chain_type(llm=ChatOpenAI(model_name="x", temperature=0.5 ,max_tokens=1000),
+                                                chain_type="stuff",
+                                                retriever=instance.as_retriever(),
+                                                chain_type_kwargs={"prompt": PROMPT})
+
+def interactive_loop():
+    while True:
+        user_query = input("User: ")
+        if user_query.lower() == "exit":
+            break
+
+        start_time = time.time()
+        result = qa({"query": user_query})
+        print(f"Response: {result['result']}")
+        print(f"Time: {time.time() - start_time} seconds")
+        print()
+
+if __name__ == '__main__':
+    interactive_loop()

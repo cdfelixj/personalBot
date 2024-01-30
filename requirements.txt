@@ -1,0 +1,8 @@
+unstructured
+pdf2image
+pdfminer
+opencv
+unstructured_inference
+pikepdf
+pypdf
+langchain
